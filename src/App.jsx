@@ -23,6 +23,11 @@ export default function App() {
       );
     });
   };
+  const handleClerList = () => {
+    const confirmed = window.confirm("Are you sure want to delete all items?");
+
+    confirmed && setData([]);
+  };
 
   return (
     <div className="App">
@@ -32,8 +37,9 @@ export default function App() {
         data={data}
         handleDeletItem={handleDeletItem}
         onToggleItems={handleToggleItem}
+        handleClerList={handleClerList}
       />
-      <State />
+      <State data={data} />
     </div>
   );
 }
@@ -80,11 +86,22 @@ function Form({ handelSendData }) {
     </form>
   );
 }
-function PackingList({ data, handleDeletItem, onToggleItems }) {
+function PackingList({ data, handleDeletItem, onToggleItems, handleClerList }) {
+  const [sortBy, setSortBy] = useState("input");
+  let sortItems;
+  if (sortBy === "input") sortItems = data;
+  if (sortBy === "description")
+    sortItems = data.slice().sort((a, b) => {
+      return a.description.localeCompare(b.description);
+    });
+  if (sortBy === "packed")
+    sortItems = data
+      .slice()
+      .sort((a, b) => Number(a.packed) - Number(b.packed));
   return (
     <div className="list">
       <ul>
-        {data?.map((item) => {
+        {sortItems?.map((item) => {
           return (
             <Item
               item={item}
@@ -95,6 +112,14 @@ function PackingList({ data, handleDeletItem, onToggleItems }) {
           );
         })}
       </ul>
+      <div className="actions">
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="input">Sort by input order</option>
+          <option value="description">Sort by description</option>
+          <option value="packed">Sort by packed status</option>
+        </select>
+        <button onClick={() => handleClerList()}> clear list</button>
+      </div>
     </div>
   );
 }
@@ -116,10 +141,18 @@ function Item({ item, data, handleDeletItem, onToggleItems }) {
     </li>
   );
 }
-function State() {
+function State({ data }) {
+  const numData = data.length;
+  const numPacked = data?.filter((item) => item?.packed).length;
+  const precentTag = Math.round((Number(numPacked) / Number(numData)) * 100);
   return (
     <footer className="stats">
-      <em>💼you have X items on your list, and you already packed X (X%)</em>
+      <em>
+        {precentTag == 100
+          ? "you got everything Ready to go✈"
+          : `💼you have ${numData} items on your list, and you already packed
+        ${numPacked} (${!precentTag ? "0" : precentTag}%)`}
+      </em>
     </footer>
   );
 }
